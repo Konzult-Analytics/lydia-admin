@@ -44,7 +44,7 @@ export function Modal({
       <div className="fixed inset-0 bg-black/40" onClick={onClose} />
       <div
         className={cn(
-          "relative w-full rounded-xl bg-white p-6 shadow-xl border border-gray-200",
+          "relative w-full rounded-xl bg-surface-elevated p-6 shadow-xl border border-border",
           sizeStyles[size],
           className
         )}

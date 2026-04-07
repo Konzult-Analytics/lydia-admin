@@ -9,7 +9,7 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary:
     "bg-frankly-dark text-white shadow-sm hover:bg-frankly-dark/90 focus:ring-frankly-dark",
   outline:
-    "border border-gray-300 bg-white text-frankly-dark hover:bg-frankly-gray-light focus:ring-frankly-green",
+    "border border-border bg-surface text-frankly-dark hover:bg-frankly-gray-light focus:ring-frankly-green",
   danger:
     "bg-red-500 text-white shadow-sm hover:bg-red-600 focus:ring-red-500",
   ghost:

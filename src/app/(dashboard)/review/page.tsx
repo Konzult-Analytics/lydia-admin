@@ -271,7 +271,7 @@ export default function ReviewPage() {
           icon={<Clock className="h-5 w-5 text-amber-500" />}
           label="Pending Review"
           value={stats.totalPending}
-          bg="bg-amber-50"
+          bg="bg-amber-50 dark:bg-amber-950"
         />
         <StatCard
           icon={<CheckCircle className="h-5 w-5 text-frankly-green" />}
@@ -283,14 +283,14 @@ export default function ReviewPage() {
           icon={<XCircle className="h-5 w-5 text-red-500" />}
           label="Rejected Today"
           value={stats.rejectedToday}
-          bg="bg-red-50"
+          bg="bg-red-50 dark:bg-red-950"
         />
       </div>
 
       {/* Filters row */}
       <div className="flex items-end gap-4 flex-wrap">
         {/* Status tabs */}
-        <div className="flex gap-1 border-b border-gray-200 flex-1 min-w-0">
+        <div className="flex gap-1 border-b border-border flex-1 min-w-0">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.value}
@@ -298,7 +298,7 @@ export default function ReviewPage() {
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px whitespace-nowrap ${
                 statusFilter === tab.value
                   ? "border-frankly-green text-frankly-green"
-                  : "border-transparent text-frankly-gray hover:text-frankly-dark hover:border-gray-300"
+                  : "border-transparent text-frankly-gray hover:text-frankly-dark hover:border-border"
               }`}
             >
               {tab.label}
@@ -336,7 +336,7 @@ export default function ReviewPage() {
       ) : visibleBenefits.length === 0 ? (
         <Card padding="lg">
           <div className="flex flex-col items-center text-center">
-            <ClipboardCheck className="h-12 w-12 text-gray-300" />
+            <ClipboardCheck className="h-12 w-12 text-border" />
             <h3 className="mt-4 text-lg font-semibold text-frankly-dark">
               {statusFilter === "pending"
                 ? "No extractions to review"
@@ -409,7 +409,7 @@ function StatCard({
   bg: string;
 }) {
   return (
-    <div className={`rounded-xl border border-gray-200 ${bg} px-5 py-4`}>
+    <div className={`rounded-xl border border-border ${bg} px-5 py-4`}>
       <div className="flex items-center gap-3">
         {icon}
         <div>

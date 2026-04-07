@@ -39,13 +39,13 @@ export function SlideOver({
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
       <div
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col bg-white shadow-2xl border-l border-gray-200",
+          "fixed inset-y-0 right-0 z-50 flex w-full max-w-2xl flex-col bg-surface-elevated shadow-2xl border-l border-border",
           className
         )}
       >
         {/* Header */}
         {(title || subtitle) && (
-          <div className="flex items-start justify-between border-b border-gray-200 px-6 py-4">
+          <div className="flex items-start justify-between border-b border-border px-6 py-4">
             <div className="min-w-0 flex-1">
               {title && (
                 <div className="text-xl font-bold text-frankly-dark">
@@ -70,7 +70,7 @@ export function SlideOver({
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-gray-200 bg-white px-6 py-4">
+          <div className="border-t border-border bg-surface-elevated px-6 py-4">
             {footer}
           </div>
         )}

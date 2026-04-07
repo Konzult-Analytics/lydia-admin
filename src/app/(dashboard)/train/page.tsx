@@ -197,9 +197,9 @@ export default function TrainPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] gap-6">
       {/* Main chat area */}
-      <div className="flex flex-1 flex-col rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="flex flex-1 flex-col rounded-xl border border-border bg-surface overflow-hidden">
         {/* Chat header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div>
             <h1 className="text-lg font-semibold text-frankly-dark">Train Lydia</h1>
             <p className="text-xs text-frankly-gray">
@@ -232,7 +232,7 @@ export default function TrainPage() {
                   <button
                     key={q}
                     onClick={() => handleSend(q)}
-                    className="text-xs text-frankly-gray border border-gray-200 rounded-full px-3 py-1.5 hover:bg-frankly-gray-light hover:text-frankly-dark transition-colors text-left"
+                    className="text-xs text-frankly-gray border border-border rounded-full px-3 py-1.5 hover:bg-frankly-gray-light hover:text-frankly-dark transition-colors text-left"
                   >
                     {q}
                   </button>
@@ -330,7 +330,7 @@ export default function TrainPage() {
         </SidebarPanel>
 
         {/* Quick Actions */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
+        <div className="rounded-lg border border-border bg-surface p-4 space-y-2">
           <h4 className="text-xs font-semibold text-frankly-gray uppercase tracking-wider mb-2">
             Quick Actions
           </h4>

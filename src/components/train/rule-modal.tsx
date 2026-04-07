@@ -36,7 +36,7 @@ export function RuleModal({ onSubmit, onCancel }: RuleModalProps) {
             value={ruleName}
             onChange={(e) => setRuleName(e.target.value)}
             placeholder="e.g., always_mention_exclusions"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
           />
         </div>
 
@@ -49,7 +49,7 @@ export function RuleModal({ onSubmit, onCancel }: RuleModalProps) {
             onChange={(e) => setRuleText(e.target.value)}
             rows={3}
             placeholder="Describe what Lydia should or shouldn't do..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
           />
         </div>
 
@@ -61,7 +61,7 @@ export function RuleModal({ onSubmit, onCancel }: RuleModalProps) {
             <select
               value={importance}
               onChange={(e) => setImportance(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
             >
               <option value="critical">Critical</option>
               <option value="high">High</option>
@@ -76,7 +76,7 @@ export function RuleModal({ onSubmit, onCancel }: RuleModalProps) {
             <select
               value={appliesTo}
               onChange={(e) => setAppliesTo(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+              className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
             >
               <option value="all">All</option>
               <option value="comparison">Comparison</option>

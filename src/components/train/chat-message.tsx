@@ -29,13 +29,13 @@ export function ChatMessage({ message, onApprove, onFlag, onAddRule }: ChatMessa
           "max-w-[85%] rounded-xl px-4 py-3",
           isUser
             ? "bg-frankly-green-light text-frankly-dark"
-            : "bg-white border border-gray-200 text-frankly-dark"
+            : "bg-surface border border-border text-frankly-dark"
         )}
       >
         {isUser ? (
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
         ) : (
-          <div className="prose prose-sm max-w-none prose-headings:text-frankly-dark prose-p:text-frankly-dark prose-strong:text-frankly-dark prose-td:text-sm prose-th:text-sm">
+          <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-frankly-dark prose-p:text-frankly-dark prose-strong:text-frankly-dark prose-td:text-sm prose-th:text-sm">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content}
             </ReactMarkdown>
@@ -44,7 +44,7 @@ export function ChatMessage({ message, onApprove, onFlag, onAddRule }: ChatMessa
 
         {/* Feedback buttons for assistant messages */}
         {!isUser && message.id && (
-          <div className="flex items-center gap-1 mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border-subtle">
             {message.feedback === "approved" ? (
               <span className="text-xs text-frankly-green font-medium">Approved</span>
             ) : message.feedback === "flagged" ? (

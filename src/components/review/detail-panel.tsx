@@ -134,7 +134,7 @@ export function DetailPanel({
     <input
       value={editName}
       onChange={(e) => setEditName(e.target.value)}
-      className="text-xl font-bold text-frankly-dark w-full rounded-lg border border-gray-200 px-3 py-1.5 focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+      className="text-xl font-bold text-frankly-dark w-full rounded-lg border border-border px-3 py-1.5 focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
     />
   ) : (
     benefit.benefit_name
@@ -145,7 +145,7 @@ export function DetailPanel({
       {doc?.insurers?.name && <span>{doc.insurers.name}</span>}
       {doc?.products?.name && (
         <>
-          <span className="text-gray-300">&bull;</span>
+          <span className="text-frankly-gray/40">&bull;</span>
           <span>{doc.products.name}</span>
         </>
       )}
@@ -212,7 +212,7 @@ export function DetailPanel({
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
             />
           ) : (
             <p className="text-sm text-frankly-dark leading-relaxed">
@@ -230,7 +230,7 @@ export function DetailPanel({
             </button>
           ) : undefined}
         >
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full text-sm">
               <thead className="bg-frankly-gray-light">
                 <tr>
@@ -240,26 +240,26 @@ export function DetailPanel({
                   {editing && <th className="px-3 py-2 w-10" />}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border-subtle">
                 {(editing ? editAttrs : benefit.benefit_attributes).map((attr, i) => (
                   <tr key={attr.id}>
                     <td className="px-3 py-2">
                       {editing ? (
-                        <input value={attr.attribute_name} onChange={(e) => updateAttr(i, "attribute_name", e.target.value)} className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" />
+                        <input value={attr.attribute_name} onChange={(e) => updateAttr(i, "attribute_name", e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" />
                       ) : (
                         <span className="text-frankly-dark">{attr.attribute_name}</span>
                       )}
                     </td>
                     <td className="px-3 py-2">
                       {editing ? (
-                        <input value={attr.attribute_value} onChange={(e) => updateAttr(i, "attribute_value", e.target.value)} className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" />
+                        <input value={attr.attribute_value} onChange={(e) => updateAttr(i, "attribute_value", e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" />
                       ) : (
                         <span className="font-medium text-frankly-dark">{attr.attribute_value}</span>
                       )}
                     </td>
                     <td className="px-3 py-2">
                       {editing ? (
-                        <input value={attr.attribute_unit ?? ""} onChange={(e) => updateAttr(i, "attribute_unit", e.target.value)} className="w-full rounded border border-gray-200 px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" placeholder="—" />
+                        <input value={attr.attribute_unit ?? ""} onChange={(e) => updateAttr(i, "attribute_unit", e.target.value)} className="w-full rounded border border-border px-2 py-1 text-sm focus:border-frankly-green focus:outline-none" placeholder="—" />
                       ) : (
                         <span className="text-frankly-gray">{attr.attribute_unit ?? "—"}</span>
                       )}
@@ -335,7 +335,7 @@ export function DetailPanel({
               onChange={(e) => setReviewerNotes(e.target.value)}
               rows={3}
               placeholder="Add notes about this benefit (optional)"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
             />
           ) : (
             <p className="text-sm text-frankly-dark">
@@ -374,7 +374,7 @@ export function DetailPanel({
                     {confidencePercent}%
                   </span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-2 w-full rounded-full bg-border overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all",
@@ -453,7 +453,7 @@ function EditableList({
           <input
             value={item}
             onChange={(e) => onUpdate(i, e.target.value)}
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+            className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
           />
           <button
             onClick={() => onRemove(i)}

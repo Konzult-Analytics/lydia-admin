@@ -36,7 +36,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className="border-t border-border bg-surface px-4 py-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
@@ -47,7 +47,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           placeholder={disabled ? "Waiting for response..." : "Type your message... (Enter to send, Shift+Enter for new line)"}
           rows={1}
           className={cn(
-            "flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm text-frankly-dark",
+            "flex-1 resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark",
             "focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green",
             "disabled:bg-frankly-gray-light disabled:text-frankly-gray/60",
             "placeholder:text-frankly-gray/50"

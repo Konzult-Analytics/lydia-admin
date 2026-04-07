@@ -38,7 +38,7 @@ export function UploadStatus({
 
   if (status === "failed") {
     return (
-      <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
+      <div className="rounded-lg bg-red-50 border border-red-200 dark:bg-red-950 dark:border-red-800 p-4 flex items-start gap-3">
         <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
         <div>
           <p className="font-medium text-red-800">Extraction Failed</p>

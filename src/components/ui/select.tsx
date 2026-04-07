@@ -34,7 +34,7 @@ export function Select({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-frankly-dark",
+          "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark",
           "focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green",
           "disabled:bg-frankly-gray-light disabled:text-frankly-gray/60 disabled:cursor-not-allowed"
         )}

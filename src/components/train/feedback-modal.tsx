@@ -29,7 +29,7 @@ export function FeedbackModal({ onSubmit, onCancel }: FeedbackModalProps) {
           <select
             value={fieldName}
             onChange={(e) => setFieldName(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
           >
             <option value="chat_response">General Response</option>
             <option value="benefit_value">Benefit Value</option>
@@ -48,7 +48,7 @@ export function FeedbackModal({ onSubmit, onCancel }: FeedbackModalProps) {
             onChange={(e) => setIssue(e.target.value)}
             rows={3}
             placeholder="Describe the issue..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
           />
         </div>
 
@@ -61,7 +61,7 @@ export function FeedbackModal({ onSubmit, onCancel }: FeedbackModalProps) {
             onChange={(e) => setCorrection(e.target.value)}
             rows={3}
             placeholder="Provide the correct answer..."
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green resize-none"
           />
         </div>
       </div>

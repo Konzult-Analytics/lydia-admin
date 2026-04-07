@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -34,10 +35,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-frankly-gray-light relative overflow-hidden">
+      {/* Theme toggle */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+
       {/* Subtle background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-frankly-green/5 blur-3xl" />
 
-      <div className="relative w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg border border-gray-200">
+      <div className="relative w-full max-w-md space-y-8 rounded-xl bg-surface p-8 shadow-lg border border-border">
         <div className="flex flex-col items-center text-center">
           <Logo size="lg" className="mb-2" />
           <p className="mt-3 text-sm text-frankly-gray">
@@ -47,7 +53,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 dark:bg-red-950 dark:border-red-800 dark:text-red-400">
               {error}
             </div>
           )}
@@ -63,7 +69,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+                className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark shadow-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
                 placeholder="you@company.com"
               />
             </div>
@@ -78,7 +84,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm shadow-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
+                className="mt-1 block w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-frankly-dark shadow-sm focus:border-frankly-green focus:outline-none focus:ring-1 focus:ring-frankly-green"
                 placeholder="Enter your password"
               />
             </div>

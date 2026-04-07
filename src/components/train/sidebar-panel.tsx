@@ -25,7 +25,7 @@ export function SidebarPanel({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className={cn("rounded-lg border border-gray-200 bg-white overflow-hidden", className)}>
+    <div className={cn("rounded-lg border border-border bg-surface overflow-hidden", className)}>
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-frankly-gray-light/50 transition-colors"
@@ -43,7 +43,7 @@ export function SidebarPanel({
         )}
       </button>
       {open && (
-        <div className="border-t border-gray-100 px-4 py-3">{children}</div>
+        <div className="border-t border-border-subtle px-4 py-3">{children}</div>
       )}
     </div>
   );

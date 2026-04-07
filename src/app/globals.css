@@ -1,22 +1,63 @@
 @import "tailwindcss";
 
+/* Define actual CSS variables on :root */
+:root {
+  --bg: #ffffff;
+  --fg: #1A1A1A;
+  --frankly-green: #00D26A;
+  --frankly-green-hover: #00B85C;
+  --frankly-green-light: #E6FBF0;
+  --frankly-dark: #1A1A1A;
+  --frankly-gray: #4A4A4A;
+  --frankly-gray-light: #F5F5F5;
+  --surface: #ffffff;
+  --surface-secondary: #F5F5F5;
+  --surface-elevated: #ffffff;
+  --border-color: #E5E7EB;
+  --border-subtle-color: #F3F4F6;
+}
+
+/* Dark mode overrides */
+.dark {
+  color-scheme: dark;
+  --bg: #0F1117;
+  --fg: #E8EAF0;
+  --frankly-green-light: #0A2E1A;
+  --frankly-dark: #E8EAF0;
+  --frankly-gray: #9BA3B5;
+  --frankly-gray-light: #1A1D27;
+  --surface: #161923;
+  --surface-secondary: #1A1D27;
+  --surface-elevated: #1E2130;
+  --border-color: #2D3348;
+  --border-subtle-color: #252A3A;
+}
+
+/* Tailwind theme — inline utilities that reference the CSS vars */
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #1A1A1A;
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 
   /* Frankly brand colors */
-  --color-frankly-green: #00D26A;
-  --color-frankly-green-hover: #00B85C;
-  --color-frankly-green-light: #E6FBF0;
-  --color-frankly-dark: #1A1A1A;
-  --color-frankly-gray: #4A4A4A;
-  --color-frankly-gray-light: #F5F5F5;
+  --color-frankly-green: var(--frankly-green);
+  --color-frankly-green-hover: var(--frankly-green-hover);
+  --color-frankly-green-light: var(--frankly-green-light);
+  --color-frankly-dark: var(--frankly-dark);
+  --color-frankly-gray: var(--frankly-gray);
+  --color-frankly-gray-light: var(--frankly-gray-light);
+
+  /* Semantic surface tokens */
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border-color);
+  --color-border-subtle: var(--border-subtle-color);
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-sans);
 }

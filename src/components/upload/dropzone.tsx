@@ -46,13 +46,13 @@ export function Dropzone({
       className={cn(
         "rounded-xl border-2 border-dashed p-8 text-center transition-colors",
         disabled
-          ? "pointer-events-none opacity-60 border-gray-200"
+          ? "pointer-events-none opacity-60 border-border"
           : "cursor-pointer",
         isDragActive
           ? "border-frankly-green bg-frankly-green-light"
           : file
             ? "border-frankly-green/40 bg-frankly-green-light"
-            : "border-gray-300 hover:border-frankly-green/50 hover:bg-frankly-green-light/50"
+            : "border-border hover:border-frankly-green/50 hover:bg-frankly-green-light/50"
       )}
     >
       <input {...getInputProps()} />
@@ -72,7 +72,7 @@ export function Dropzone({
                 e.stopPropagation();
                 onFileRemove();
               }}
-              className="ml-2 rounded-full p-1 text-frankly-gray hover:bg-gray-200 hover:text-frankly-dark"
+              className="ml-2 rounded-full p-1 text-frankly-gray hover:bg-surface-secondary hover:text-frankly-dark"
             >
               <X className="h-5 w-5" />
             </button>
@@ -83,7 +83,7 @@ export function Dropzone({
           <Upload
             className={cn(
               "h-10 w-10",
-              isDragActive ? "text-frankly-green" : "text-gray-400"
+              isDragActive ? "text-frankly-green" : "text-frankly-gray"
             )}
           />
           <p className="mt-3 text-sm font-medium text-frankly-dark">

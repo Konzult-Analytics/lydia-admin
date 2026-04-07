@@ -62,7 +62,7 @@ export function BenefitCard({
   const attrCount = benefit.benefit_attributes.length;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-xl border border-border bg-surface shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center gap-4 px-5 py-4">
         {/* Info */}
         <div className="flex-1 min-w-0">

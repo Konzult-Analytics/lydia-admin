@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/upload", label: "Upload", icon: Upload },
@@ -39,7 +40,7 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <aside className="flex w-64 flex-col border-r border-gray-200 bg-white">
+      <aside className="flex w-64 flex-col border-r border-border bg-surface">
         <div className="flex h-16 items-center px-6">
           <Logo size="md" showSubtitle />
         </div>
@@ -66,7 +67,7 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-border p-4">
           <div className="text-xs text-frankly-gray truncate mb-2">
             {userEmail ?? "Loading..."}
           </div>
@@ -82,13 +83,16 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-8">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-8">
           <h2 className="text-lg font-semibold text-frankly-dark">
             Lydia Admin Portal
           </h2>
-          {userEmail && (
-            <span className="text-sm text-frankly-gray">{userEmail}</span>
-          )}
+          <div className="flex items-center gap-3">
+            {userEmail && (
+              <span className="text-sm text-frankly-gray">{userEmail}</span>
+            )}
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto bg-frankly-gray-light p-8">
