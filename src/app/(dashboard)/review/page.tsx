@@ -271,7 +271,7 @@ export default function ReviewPage() {
           icon={<Clock className="h-5 w-5 text-amber-500" />}
           label="Pending Review"
           value={stats.totalPending}
-          bg="bg-amber-50 dark:bg-amber-950"
+          bg="bg-amber-50 dark:bg-amber-900/20"
         />
         <StatCard
           icon={<CheckCircle className="h-5 w-5 text-frankly-green" />}
@@ -283,7 +283,7 @@ export default function ReviewPage() {
           icon={<XCircle className="h-5 w-5 text-red-500" />}
           label="Rejected Today"
           value={stats.rejectedToday}
-          bg="bg-red-50 dark:bg-red-950"
+          bg="bg-red-50 dark:bg-red-900/20"
         />
       </div>
 

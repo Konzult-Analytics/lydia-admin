@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use .dark class instead of prefers-color-scheme for dark: variants */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Define actual CSS variables on :root */
 :root {
   --bg: #ffffff;
