@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Eye, FileText, Gauge, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Copy, Eye, FileText, Gauge, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,9 @@ export interface BenefitWithDetails {
   reviewer_notes: string | null;
   reviewed_at: string | null;
   created_at?: string;
+  uncertain_fields?: string[] | null;
+  possible_duplicate_of?: string | null;
+  duplicate_score?: number | null;
   benefit_attributes: BenefitAttribute[];
   benefit_types: { id: string; name: string; category_id: string | null } | null;
   source_documents: {
@@ -74,6 +77,24 @@ export function BenefitCard({
             {benefit.benefit_types && (
               <span className="text-xs text-frankly-gray bg-frankly-gray-light px-2 py-0.5 rounded-full">
                 {benefit.benefit_types.name}
+              </span>
+            )}
+            {benefit.uncertain_fields && benefit.uncertain_fields.length > 0 && (
+              <span
+                title={`AI flagged: ${benefit.uncertain_fields.join(", ")}`}
+                className="inline-flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {benefit.uncertain_fields.length} uncertain
+              </span>
+            )}
+            {benefit.possible_duplicate_of && (
+              <span
+                title="Possible duplicate of an existing benefit"
+                className="inline-flex items-center gap-1 text-[11px] text-violet-700 bg-violet-50 border border-violet-200 px-1.5 py-0.5 rounded"
+              >
+                <Copy className="h-3 w-3" />
+                duplicate?
               </span>
             )}
           </div>

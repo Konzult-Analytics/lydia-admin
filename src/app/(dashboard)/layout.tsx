@@ -10,6 +10,7 @@ import {
   Database,
   FileText,
   Activity,
+  Settings,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/documents", label: "Documents", icon: FileText },
   { href: "/activity", label: "Activity", icon: Activity },
   { href: "/train", label: "Train", icon: Brain },
+  { href: "/manage", label: "Manage", icon: Settings },
 ];
 
 export default function DashboardLayout({

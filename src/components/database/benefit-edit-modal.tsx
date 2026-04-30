@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getMissingTemplateAttributes } from "@/lib/benefit-templates";
 import type { BenefitWithDetails, BenefitAttribute } from "@/components/review/benefit-card";
 
 interface BenefitEditModalProps {
@@ -46,20 +47,25 @@ export function BenefitEditModal({ benefit, onClose, onSaved }: BenefitEditModal
       prev.map((a, idx) => (idx === i ? { ...a, [field]: value || null } : a))
     );
   }
-  function addAttr() {
+  function addAttr(name = "", unit: string | null = null) {
     setAttrs((prev) => [
       ...prev,
       {
-        id: `new-${Date.now()}`,
+        id: `new-${Date.now()}-${Math.random()}`,
         product_benefit_id: benefit.id,
-        attribute_name: "",
+        attribute_name: name,
         attribute_value: "",
-        attribute_unit: null,
+        attribute_unit: unit,
         source_page: null,
         _new: true,
       },
     ]);
   }
+
+  const missingTemplateAttrs = getMissingTemplateAttributes(
+    benefit.benefit_types?.id,
+    attrs
+  );
   function removeAttr(i: number) {
     const a = attrs[i];
     if (!a._new) setDeletedAttrIds((prev) => [...prev, a.id]);
@@ -137,13 +143,35 @@ export function BenefitEditModal({ benefit, onClose, onSaved }: BenefitEditModal
           label="Attributes"
           action={
             <button
-              onClick={addAttr}
+              onClick={() => addAttr()}
               className="text-xs font-medium text-frankly-green hover:text-frankly-green-hover inline-flex items-center gap-1"
             >
               <Plus className="h-3.5 w-3.5" /> Add Row
             </button>
           }
         >
+          {missingTemplateAttrs.length > 0 && (
+            <div className="mb-2 rounded-lg border border-frankly-green/20 bg-frankly-green-light/50 px-3 py-2">
+              <p className="text-xs font-medium text-frankly-dark mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-frankly-green" />
+                Suggested for {benefit.benefit_types?.name ?? "this type"}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {missingTemplateAttrs.map((t) => (
+                  <button
+                    key={t.attribute_name}
+                    type="button"
+                    onClick={() => addAttr(t.attribute_name, t.attribute_unit)}
+                    title={t.example ? `e.g. ${t.example}` : undefined}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-medium text-frankly-dark hover:border-frankly-green hover:text-frankly-green transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                    {t.attribute_name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-frankly-gray-light text-xs">

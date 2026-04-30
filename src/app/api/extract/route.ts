@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "unpdf";
 import { getAuditUser, logAudit } from "@/lib/audit";
+import { findBestMatch } from "@/lib/similarity";
 import type { ExtractionSettings } from "@/types/database";
 
 const supabase = createClient(
@@ -352,10 +353,30 @@ export async function POST(request: NextRequest) {
     const claudeBenefitCount = extracted.benefits?.length ?? 0;
     let savedCount = 0;
     let failedCount = 0;
+    let duplicateCount = 0;
     const saveErrors: string[] = [];
+
+    // Pre-fetch existing approved + pending benefits for the same product.
+    // Used for duplicate detection — only same product, since the same benefit
+    // name across products is not a duplicate.
+    const { data: existingForProduct } = await supabase
+      .from("product_benefits")
+      .select("id, benefit_name, benefit_type_id, status")
+      .eq("product_id", doc.product_id)
+      .in("status", ["approved", "pending"]);
 
     for (const benefit of extracted.benefits ?? []) {
       const benefitTypeId = resolveBenefitType(benefit.benefit_type_id, benefit.benefit_name);
+
+      // Duplicate check: only consider existing benefits of the same type.
+      const candidates = ((existingForProduct ?? []) as Array<{
+        id: string;
+        benefit_name: string;
+        benefit_type_id: string | null;
+      }>)
+        .filter((e) => e.benefit_type_id === benefitTypeId)
+        .map((e) => ({ id: e.id, name: e.benefit_name }));
+      const match = findBestMatch(benefit.benefit_name, candidates, 0.6);
 
       try {
         const insert: Record<string, unknown> = {
@@ -372,9 +393,12 @@ export async function POST(request: NextRequest) {
             settings.flagUncertainties && benefit.uncertain_fields?.length
               ? benefit.uncertain_fields
               : null,
+          possible_duplicate_of: match?.id ?? null,
+          duplicate_score: match ? Number(match.score.toFixed(2)) : null,
           status: "pending",
         };
         if (auditUser.id) insert.created_by = auditUser.id;
+        if (match) duplicateCount++;
 
         const { data: savedBenefit, error: benefitError } = await supabase
           .from("product_benefits")
@@ -502,6 +526,7 @@ export async function POST(request: NextRequest) {
         claudeExtracted: claudeBenefitCount,
         saved: savedCount,
         failed: failedCount,
+        duplicateFlags: duplicateCount,
         settings,
       },
     });

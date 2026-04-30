@@ -11,6 +11,8 @@ import {
   CheckCircle,
   XCircle,
   Upload,
+  AlertTriangle,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -50,6 +52,9 @@ export default function ReviewPage() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("pending");
   const [insurerFilter, setInsurerFilter] = useState("");
   const [benefitTypeFilter, setBenefitTypeFilter] = useState("");
+  const [confidenceFilter, setConfidenceFilter] = useState("");
+  const [uncertainOnly, setUncertainOnly] = useState(false);
+  const [duplicateOnly, setDuplicateOnly] = useState(false);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
   const [benefitTypes, setBenefitTypes] = useState<BenefitType[]>([]);
   const [stats, setStats] = useState<Stats>({ totalPending: 0, approvedToday: 0, rejectedToday: 0 });
@@ -104,8 +109,28 @@ export default function ReviewPage() {
     if (benefitTypeFilter) {
       filtered = filtered.filter((b) => b.benefit_types?.id === benefitTypeFilter);
     }
+    if (confidenceFilter) {
+      filtered = filtered.filter((b) => {
+        const c = b.extraction_confidence;
+        if (c === null || c === undefined) return false;
+        if (confidenceFilter === "high") return c >= 0.9;
+        if (confidenceFilter === "med") return c >= 0.7 && c < 0.9;
+        if (confidenceFilter === "low") return c < 0.7;
+        return true;
+      });
+    }
+    if (uncertainOnly) {
+      filtered = filtered.filter(
+        (b) => (b as unknown as { uncertain_fields: string[] | null }).uncertain_fields?.length
+      );
+    }
+    if (duplicateOnly) {
+      filtered = filtered.filter(
+        (b) => (b as unknown as { possible_duplicate_of: string | null }).possible_duplicate_of
+      );
+    }
     return filtered;
-  }, [benefits, statusFilter, benefitTypeFilter]);
+  }, [benefits, statusFilter, benefitTypeFilter, confidenceFilter, uncertainOnly, duplicateOnly]);
 
   const pendingCount = benefits.filter((b) => b.status === "pending").length;
 
@@ -326,6 +351,43 @@ export default function ReviewPage() {
           placeholder="All types"
           className="w-56"
         />
+        <Select
+          label="Confidence"
+          value={confidenceFilter}
+          onChange={setConfidenceFilter}
+          options={[
+            { value: "", label: "Any confidence" },
+            { value: "high", label: "≥ 90%" },
+            { value: "med", label: "70 – 89%" },
+            { value: "low", label: "< 70%" },
+          ]}
+          className="w-40"
+        />
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setUncertainOnly((v) => !v)}
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            uncertainOnly
+              ? "border-amber-300 bg-amber-50 text-amber-700"
+              : "border-border bg-surface text-frankly-gray hover:text-frankly-dark"
+          }`}
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Uncertain only
+        </button>
+        <button
+          onClick={() => setDuplicateOnly((v) => !v)}
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+            duplicateOnly
+              ? "border-violet-300 bg-violet-50 text-violet-700"
+              : "border-border bg-surface text-frankly-gray hover:text-frankly-dark"
+          }`}
+        >
+          <Copy className="h-3.5 w-3.5" />
+          Possible duplicates
+        </button>
       </div>
 
       {/* Content */}

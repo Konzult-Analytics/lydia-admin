@@ -9,11 +9,16 @@ import {
   FileText,
   Gauge,
   Calendar,
+  ExternalLink,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SlideOver } from "@/components/ui/slide-over";
 import { cn } from "@/lib/utils";
+import { getMissingTemplateAttributes } from "@/lib/benefit-templates";
 import type { BenefitWithDetails, BenefitAttribute } from "./benefit-card";
 
 interface DetailPanelProps {
@@ -110,15 +115,15 @@ export function DetailPanel({
       prev.map((a, i) => (i === index ? { ...a, [field]: value || null } : a))
     );
   }
-  function addAttr() {
+  function addAttr(name = "", unit: string | null = null) {
     setEditAttrs((prev) => [
       ...prev,
       {
-        id: `new-${Date.now()}`,
+        id: `new-${Date.now()}-${Math.random()}`,
         product_benefit_id: benefit.id,
-        attribute_name: "",
+        attribute_name: name,
         attribute_value: "",
-        attribute_unit: null,
+        attribute_unit: unit,
         source_page: null,
         _new: true,
       },
@@ -129,6 +134,33 @@ export function DetailPanel({
     if (!attr._new) setDeletedAttrIds((prev) => [...prev, attr.id]);
     setEditAttrs((prev) => prev.filter((_, i) => i !== index));
   }
+
+  async function openSourcePdf() {
+    if (!doc) return;
+    try {
+      const res = await fetch(`/api/documents/${doc.id}/url`);
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error ?? "Could not load PDF");
+      const page = parsePageNumber(benefit.source_page);
+      const url = page ? `${data.url}#page=${page}` : data.url;
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not open PDF");
+    }
+  }
+
+  const missingTemplateAttrs = getMissingTemplateAttributes(
+    benefit.benefit_types?.id,
+    editing ? editAttrs : benefit.benefit_attributes
+  );
+
+  const uncertainFields =
+    (benefit as unknown as { uncertain_fields: string[] | null }).uncertain_fields ?? [];
+
+  const duplicateOf =
+    (benefit as unknown as { possible_duplicate_of: string | null }).possible_duplicate_of;
+  const duplicateScore =
+    (benefit as unknown as { duplicate_score: number | null }).duplicate_score;
 
   const headerTitle = editing ? (
     <input
@@ -221,11 +253,37 @@ export function DetailPanel({
           )}
         </Section>
 
+        {/* Uncertain fields banner */}
+        {uncertainFields.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-900">
+              <span className="font-semibold">AI flagged uncertain fields: </span>
+              {uncertainFields.join(", ")}
+            </div>
+          </div>
+        )}
+
+        {duplicateOf && (
+          <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-violet-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-violet-900">
+              <span className="font-semibold">
+                Possible duplicate
+                {duplicateScore !== null && duplicateScore !== undefined
+                  ? ` (${Math.round(duplicateScore * 100)}% similarity)`
+                  : ""}
+              </span>{" "}
+              of an existing approved/pending benefit on the same product. Review before approving.
+            </div>
+          </div>
+        )}
+
         {/* Attributes */}
         <Section
           label="Attributes"
           action={editing ? (
-            <button onClick={addAttr} className="flex items-center gap-1 text-xs font-medium text-frankly-green hover:text-frankly-green-hover">
+            <button onClick={() => addAttr()} className="flex items-center gap-1 text-xs font-medium text-frankly-green hover:text-frankly-green-hover">
               <Plus className="h-3.5 w-3.5" /> Add Row
             </button>
           ) : undefined}
@@ -283,6 +341,28 @@ export function DetailPanel({
               </tbody>
             </table>
           </div>
+          {editing && missingTemplateAttrs.length > 0 && (
+            <div className="mt-2 rounded-lg border border-frankly-green/20 bg-frankly-green-light/50 px-3 py-2">
+              <p className="text-xs font-medium text-frankly-dark mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-frankly-green" />
+                Suggested for {benefit.benefit_types?.name ?? "this type"}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {missingTemplateAttrs.map((t) => (
+                  <button
+                    key={t.attribute_name}
+                    type="button"
+                    onClick={() => addAttr(t.attribute_name, t.attribute_unit)}
+                    title={t.example ? `e.g. ${t.example}` : undefined}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-medium text-frankly-dark hover:border-frankly-green hover:text-frankly-green transition-colors"
+                  >
+                    <Plus className="h-3 w-3" />
+                    {t.attribute_name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </Section>
 
         {/* Key Features */}
@@ -350,8 +430,8 @@ export function DetailPanel({
             {doc && (
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-frankly-gray" />
-                <span className="text-frankly-dark font-medium">{doc.file_name}</span>
-                <Badge variant="uploaded" className="ml-auto">
+                <span className="text-frankly-dark font-medium truncate">{doc.file_name}</span>
+                <Badge variant="uploaded" className="ml-auto shrink-0">
                   {doc.document_type.replace(/_/g, " ")}
                 </Badge>
               </div>
@@ -360,6 +440,17 @@ export function DetailPanel({
               <div className="text-sm text-frankly-gray">
                 Page reference: <span className="text-frankly-dark">{benefit.source_page}</span>
               </div>
+            )}
+            {doc && (
+              <button
+                onClick={openSourcePdf}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-frankly-green hover:text-frankly-green-hover"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {benefit.source_page
+                  ? `Open PDF at page ${benefit.source_page}`
+                  : "Open source PDF"}
+              </button>
             )}
             {confidencePercent !== null && (
               <div>
@@ -414,6 +505,14 @@ function Section({ label, action, children }: { label: string; action?: React.Re
       {children}
     </section>
   );
+}
+
+function parsePageNumber(ref: string | null | undefined): number | null {
+  if (!ref) return null;
+  const match = ref.match(/\d+/);
+  if (!match) return null;
+  const num = parseInt(match[0], 10);
+  return Number.isFinite(num) && num > 0 ? num : null;
 }
 
 function BulletList({ items, color, emptyText }: { items: string[]; color: string; emptyText: string }) {

@@ -14,6 +14,10 @@ import {
   Undo2,
   Check,
   XCircle,
+  AlertTriangle,
+  Gauge,
+  Square,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -35,6 +39,13 @@ import { cn } from "@/lib/utils";
 type ViewMode = "tree" | "grid";
 type StatusFilter = ReviewStatus | "all";
 
+const CONFIDENCE_OPTIONS = [
+  { value: "", label: "Any confidence" },
+  { value: "high", label: "≥ 90%" },
+  { value: "med", label: "70 – 89%" },
+  { value: "low", label: "< 70%" },
+];
+
 export default function DatabasePage() {
   const supabase = createClient();
   const [stats, setStats] = useState<DatabaseStats | null>(null);
@@ -49,6 +60,13 @@ export default function DatabasePage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [insurerFilter, setInsurerFilter] = useState("");
   const [benefitTypeFilter, setBenefitTypeFilter] = useState("");
+  const [confidenceFilter, setConfidenceFilter] = useState("");
+  const [uncertainOnly, setUncertainOnly] = useState(false);
+  const [duplicateOnly, setDuplicateOnly] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const [selected, setSelected] = useState<BenefitWithDetails | null>(null);
   const [editTarget, setEditTarget] = useState<BenefitWithDetails | null>(null);
@@ -110,6 +128,7 @@ export default function DatabasePage() {
   function refresh() {
     loadStats();
     loadBenefits();
+    setSelectedIds(new Set());
   }
 
   function clearFilters() {
@@ -117,6 +136,93 @@ export default function DatabasePage() {
     setStatusFilter("all");
     setInsurerFilter("");
     setBenefitTypeFilter("");
+    setConfidenceFilter("");
+    setUncertainOnly(false);
+    setDuplicateOnly(false);
+  }
+
+  // Apply client-side filters that the API doesn't (yet) handle
+  const visibleBenefits = useMemo(() => {
+    let result = benefits;
+    if (confidenceFilter) {
+      result = result.filter((b) => {
+        const c = b.extraction_confidence;
+        if (c === null || c === undefined) return false;
+        if (confidenceFilter === "high") return c >= 0.9;
+        if (confidenceFilter === "med") return c >= 0.7 && c < 0.9;
+        if (confidenceFilter === "low") return c < 0.7;
+        return true;
+      });
+    }
+    if (uncertainOnly) {
+      result = result.filter(
+        (b) =>
+          (b as unknown as { uncertain_fields: string[] | null }).uncertain_fields?.length
+      );
+    }
+    if (duplicateOnly) {
+      result = result.filter(
+        (b) =>
+          (b as unknown as { possible_duplicate_of: string | null }).possible_duplicate_of
+      );
+    }
+    return result;
+  }, [benefits, confidenceFilter, uncertainOnly, duplicateOnly]);
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleGroup(ids: string[]) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = ids.every((id) => next.has(id));
+      if (allSelected) {
+        for (const id of ids) next.delete(id);
+      } else {
+        for (const id of ids) next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function selectAllVisible() {
+    setSelectedIds(new Set(visibleBenefits.map((b) => b.id)));
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
+  async function bulkAction(action: "approve" | "reject" | "reconsider", rejectReason?: string) {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/review/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ids: Array.from(selectedIds),
+          action,
+          rejectReason,
+          sourcePage: "database",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+      toast.success(`${action} applied to ${data.count} benefit${data.count === 1 ? "" : "s"}`);
+      setBulkRejectOpen(false);
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setBulkLoading(false);
+    }
   }
 
   async function handleApprove(id: string, fromDetail = true) {
@@ -235,10 +341,6 @@ export default function DatabasePage() {
     }
   }
 
-  function openDetailFor(b: BenefitWithDetails) {
-    setSelected(b);
-  }
-
   function exportCsv() {
     const params = new URLSearchParams();
     if (statusFilter !== "all") params.set("status", statusFilter);
@@ -246,10 +348,8 @@ export default function DatabasePage() {
     window.open(`/api/database/export?${params}`, "_blank");
   }
 
-  const visibleBenefits = useMemo(() => benefits, [benefits]);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-frankly-dark">Database Explorer</h1>
@@ -307,7 +407,33 @@ export default function DatabasePage() {
             placeholder="All types"
             className="w-56"
           />
-          {(search || statusFilter !== "all" || insurerFilter || benefitTypeFilter) && (
+          <Select
+            value={confidenceFilter}
+            onChange={setConfidenceFilter}
+            options={CONFIDENCE_OPTIONS}
+            className="w-44"
+          />
+          <ToggleChip
+            active={uncertainOnly}
+            onClick={() => setUncertainOnly((v) => !v)}
+            icon={<AlertTriangle className="h-3.5 w-3.5" />}
+          >
+            Uncertain only
+          </ToggleChip>
+          <ToggleChip
+            active={duplicateOnly}
+            onClick={() => setDuplicateOnly((v) => !v)}
+            icon={<Gauge className="h-3.5 w-3.5" />}
+          >
+            Possible duplicates
+          </ToggleChip>
+          {(search ||
+            statusFilter !== "all" ||
+            insurerFilter ||
+            benefitTypeFilter ||
+            confidenceFilter ||
+            uncertainOnly ||
+            duplicateOnly) && (
             <Button variant="ghost" onClick={clearFilters} className="gap-1.5 text-xs">
               <RotateCcw className="h-3.5 w-3.5" />
               Clear
@@ -324,8 +450,19 @@ export default function DatabasePage() {
               Comparison
             </ViewTab>
           </div>
-          <div className="text-xs text-frankly-gray">
-            {visibleBenefits.length} benefit{visibleBenefits.length === 1 ? "" : "s"}
+          <div className="flex items-center gap-3 text-xs text-frankly-gray">
+            <span>
+              {visibleBenefits.length} benefit{visibleBenefits.length === 1 ? "" : "s"}
+            </span>
+            {view === "tree" && visibleBenefits.length > 0 && (
+              <button
+                onClick={selectedIds.size === visibleBenefits.length ? clearSelection : selectAllVisible}
+                className="inline-flex items-center gap-1 hover:text-frankly-dark"
+              >
+                <Square className="h-3 w-3" />
+                {selectedIds.size === visibleBenefits.length ? "Deselect all" : "Select all visible"}
+              </button>
+            )}
           </div>
         </div>
       </Card>
@@ -335,9 +472,34 @@ export default function DatabasePage() {
           <Loader2 className="h-8 w-8 text-frankly-green animate-spin" />
         </div>
       ) : view === "tree" ? (
-        <ExplorerTree benefits={visibleBenefits} onSelect={openDetailFor} />
+        <ExplorerTree
+          benefits={visibleBenefits}
+          onSelect={(b) => setSelected(b)}
+          selectedIds={selectedIds}
+          onToggleSelected={toggleSelected}
+          onToggleGroup={toggleGroup}
+        />
       ) : (
-        <ComparisonGrid benefits={visibleBenefits} onSelect={openDetailFor} />
+        <ComparisonGrid benefits={visibleBenefits} onSelect={(b) => setSelected(b)} />
+      )}
+
+      {selectedIds.size > 0 && (
+        <BulkActionBar
+          count={selectedIds.size}
+          loading={bulkLoading}
+          onClear={clearSelection}
+          onApprove={() => bulkAction("approve")}
+          onReject={() => setBulkRejectOpen(true)}
+          onReconsider={() => bulkAction("reconsider")}
+        />
+      )}
+
+      {bulkRejectOpen && (
+        <RejectModal
+          benefitName={`${selectedIds.size} selected benefits`}
+          onConfirm={(reason) => bulkAction("reject", reason)}
+          onCancel={() => setBulkRejectOpen(false)}
+        />
       )}
 
       {selected && (
@@ -420,6 +582,87 @@ function ViewTab({
   );
 }
 
+function ToggleChip({
+  active,
+  onClick,
+  icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        active
+          ? "border-amber-300 bg-amber-50 text-amber-700"
+          : "border-border bg-surface text-frankly-gray hover:text-frankly-dark"
+      )}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function BulkActionBar({
+  count,
+  loading,
+  onClear,
+  onApprove,
+  onReject,
+  onReconsider,
+}: {
+  count: number;
+  loading: boolean;
+  onClear: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  onReconsider: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-3 py-2 shadow-2xl">
+      <span className="text-sm text-frankly-dark font-medium px-2">
+        {count} selected
+      </span>
+      <Button onClick={onApprove} disabled={loading} className="gap-1.5 text-xs px-3 py-1.5">
+        <Check className="h-3.5 w-3.5" />
+        Approve
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={onReject}
+        disabled={loading}
+        className="gap-1.5 text-xs px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+      >
+        <XCircle className="h-3.5 w-3.5" />
+        Reject
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={onReconsider}
+        disabled={loading}
+        className="gap-1.5 text-xs px-3 py-1.5"
+      >
+        <Undo2 className="h-3.5 w-3.5" />
+        Reconsider
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={onClear}
+        disabled={loading}
+        className="gap-1.5 text-xs px-2 py-1.5"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 function NonPendingActionsBar({
   benefit,
   onEdit,
@@ -437,8 +680,6 @@ function NonPendingActionsBar({
   onReconsider: () => void;
   disabled?: boolean;
 }) {
-  // The DetailPanel already shows pending action footer. For approved/rejected
-  // we show a floating action bar attached to the slide-over.
   return (
     <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-xl border border-border bg-surface-elevated px-3 py-2 shadow-2xl">
       <Badge variant={benefit.status}>{benefit.status}</Badge>

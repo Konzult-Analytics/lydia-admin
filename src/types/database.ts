@@ -82,6 +82,8 @@ export interface ProductBenefit {
   updated_by: string | null;
   updated_at: string | null;
   uncertain_fields: string[] | null;
+  possible_duplicate_of: string | null;
+  duplicate_score: number | null;
 }
 
 export interface AuditLogEntry {
