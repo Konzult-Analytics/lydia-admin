@@ -6,7 +6,7 @@ interface SelectOption {
 }
 
 interface SelectProps {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
@@ -26,9 +26,11 @@ export function Select({
 }: SelectProps) {
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-frankly-dark mb-1">
-        {label}
-      </label>
+      {label && (
+        <label className="block text-sm font-medium text-frankly-dark mb-1">
+          {label}
+        </label>
+      )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

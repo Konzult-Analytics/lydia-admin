@@ -12,7 +12,15 @@ import {
   UploadStatus,
   type UploadStatusType,
 } from "@/components/upload/upload-status";
-import type { Insurer, Product } from "@/types/database";
+import { ExtractionSettingsPanel } from "@/components/upload/extraction-settings";
+import type { Insurer, Product, ExtractionSettings } from "@/types/database";
+
+const DEFAULT_EXTRACTION_SETTINGS: ExtractionSettings = {
+  sensitivity: "balanced",
+  includeSubBenefits: true,
+  flagUncertainties: true,
+  attributeDetail: "detailed",
+};
 
 const DOCUMENT_TYPES = [
   { value: "product_guide", label: "Product Guide" },
@@ -33,6 +41,7 @@ export default function UploadPage() {
   const [status, setStatus] = useState<UploadStatusType>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [benefitsCount, setBenefitsCount] = useState(0);
+  const [settings, setSettings] = useState<ExtractionSettings>(DEFAULT_EXTRACTION_SETTINGS);
 
   useEffect(() => {
     async function fetchInsurers() {
@@ -129,7 +138,7 @@ export default function UploadPage() {
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: doc.id }),
+        body: JSON.stringify({ documentId: doc.id, settings }),
       });
 
       if (!response.ok) {
@@ -209,6 +218,12 @@ export default function UploadPage() {
           file={file}
           onFileSelect={handleFileSelect}
           onFileRemove={handleFileRemove}
+          disabled={isLocked}
+        />
+
+        <ExtractionSettingsPanel
+          settings={settings}
+          onChange={setSettings}
           disabled={isLocked}
         />
 

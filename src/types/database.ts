@@ -29,6 +29,16 @@ export type DocumentType = "product_guide" | "brochure" | "technical_guide" | "b
 export type UploadStatus = "uploaded" | "processing" | "processed" | "failed";
 export type ReviewStatus = "pending" | "approved" | "rejected";
 
+export type ExtractionSensitivity = "conservative" | "balanced" | "thorough";
+export type AttributeDetail = "basic" | "detailed" | "comprehensive";
+
+export interface ExtractionSettings {
+  sensitivity: ExtractionSensitivity;
+  includeSubBenefits: boolean;
+  flagUncertainties: boolean;
+  attributeDetail: AttributeDetail;
+}
+
 export interface SourceDocument {
   id: string;
   insurer_id: string;
@@ -40,6 +50,15 @@ export interface SourceDocument {
   upload_status: UploadStatus;
   uploaded_by: string | null;
   created_at: string;
+  extraction_settings: ExtractionSettings | null;
+  page_count: number | null;
+  document_version: string | null;
+  is_current: boolean | null;
+  needs_review: boolean | null;
+  review_notes: string | null;
+  superseded_by: string | null;
+  last_reviewed_at: string | null;
+  last_reviewed_by: string | null;
 }
 
 export interface ProductBenefit {
@@ -58,6 +77,25 @@ export interface ProductBenefit {
   reviewer_notes: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  created_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+  updated_at: string | null;
+  uncertain_fields: string[] | null;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: string;
+  user_id: string | null;
+  user_email: string | null;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  changed_fields: string[] | null;
+  reason: string | null;
+  source_page: string | null;
   created_at: string;
 }
 

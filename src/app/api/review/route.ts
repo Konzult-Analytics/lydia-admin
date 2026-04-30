@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAuditUser, logAudit } from "@/lib/audit";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,7 +45,6 @@ export async function GET(request: NextRequest) {
 
   let benefits = data ?? [];
 
-  // Filter by insurer (nested join, must filter client-side)
   if (insurerId) {
     benefits = benefits.filter((b: Record<string, unknown>) => {
       const doc = b.source_documents as Record<string, unknown> | null;
@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Stats are computed from unfiltered data
   const allData = data ?? [];
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -79,9 +78,9 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { benefitId, action, edits, rejectReason } = body as {
+    const { benefitId, action, edits, rejectReason, reason, sourcePage } = body as {
       benefitId: string;
-      action: "approve" | "reject" | "edit";
+      action: "approve" | "reject" | "edit" | "reconsider";
       edits?: {
         benefit_name?: string;
         description?: string;
@@ -97,6 +96,8 @@ export async function PATCH(request: NextRequest) {
         deletedAttributeIds?: string[];
       };
       rejectReason?: string;
+      reason?: string;
+      sourcePage?: "review" | "database";
     };
 
     if (!benefitId || !action) {
@@ -106,23 +107,69 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const user = await getAuditUser();
     const reviewedAt = new Date().toISOString();
+    const auditPage = sourcePage ?? "review";
 
     if (action === "approve") {
+      const { data: before } = await supabase
+        .from("product_benefits")
+        .select("status, reviewed_at")
+        .eq("id", benefitId)
+        .single();
+
+      const update: Record<string, unknown> = {
+        status: "approved",
+        reviewed_at: reviewedAt,
+      };
+      if (user.id) {
+        update.reviewed_by = user.id;
+        update.updated_by = user.id;
+        update.updated_at = reviewedAt;
+      }
+
       const { error } = await supabase
         .from("product_benefits")
-        .update({ status: "approved", reviewed_at: reviewedAt })
+        .update(update)
         .eq("id", benefitId);
 
       if (error) throw error;
+
+      await logAudit(
+        supabase,
+        {
+          table_name: "product_benefits",
+          record_id: benefitId,
+          action: "approve",
+          old_values: before ? { status: before.status } : null,
+          new_values: { status: "approved" },
+          changed_fields: ["status"],
+          reason: reason ?? null,
+          source_page: auditPage,
+        },
+        user
+      );
+
       return NextResponse.json({ success: true, status: "approved" });
     }
 
     if (action === "reject") {
-      // Build update — only include optional columns if they have values
-      const rejectUpdate: Record<string, unknown> = { status: "rejected" };
+      const { data: before } = await supabase
+        .from("product_benefits")
+        .select("status, rejection_reason")
+        .eq("id", benefitId)
+        .single();
+
+      const rejectUpdate: Record<string, unknown> = {
+        status: "rejected",
+        reviewed_at: reviewedAt,
+      };
       if (rejectReason) rejectUpdate.rejection_reason = rejectReason;
-      rejectUpdate.reviewed_at = reviewedAt;
+      if (user.id) {
+        rejectUpdate.reviewed_by = user.id;
+        rejectUpdate.updated_by = user.id;
+        rejectUpdate.updated_at = reviewedAt;
+      }
 
       const { error } = await supabase
         .from("product_benefits")
@@ -131,18 +178,80 @@ export async function PATCH(request: NextRequest) {
 
       if (error) {
         console.error("[review] Reject failed:", error.message, error.details);
-        // If the error is about missing columns, retry with just status
         if (error.message?.includes("column") || error.code === "PGRST204") {
           const { error: retryError } = await supabase
             .from("product_benefits")
             .update({ status: "rejected" })
             .eq("id", benefitId);
           if (retryError) throw retryError;
-          return NextResponse.json({ success: true, status: "rejected", note: "Some columns may be missing — run the migration SQL" });
+          return NextResponse.json({
+            success: true,
+            status: "rejected",
+            note: "Some columns may be missing — run the migration SQL",
+          });
         }
         throw error;
       }
+
+      await logAudit(
+        supabase,
+        {
+          table_name: "product_benefits",
+          record_id: benefitId,
+          action: "reject",
+          old_values: before ? { status: before.status } : null,
+          new_values: { status: "rejected", rejection_reason: rejectReason ?? null },
+          changed_fields: ["status", "rejection_reason"],
+          reason: rejectReason ?? reason ?? null,
+          source_page: auditPage,
+        },
+        user
+      );
+
       return NextResponse.json({ success: true, status: "rejected" });
+    }
+
+    if (action === "reconsider") {
+      const { data: before } = await supabase
+        .from("product_benefits")
+        .select("status, rejection_reason")
+        .eq("id", benefitId)
+        .single();
+
+      const update: Record<string, unknown> = {
+        status: "pending",
+        reviewed_at: null,
+      };
+      if (user.id) {
+        update.updated_by = user.id;
+        update.updated_at = reviewedAt;
+      }
+
+      const { error } = await supabase
+        .from("product_benefits")
+        .update(update)
+        .eq("id", benefitId);
+
+      if (error) throw error;
+
+      await logAudit(
+        supabase,
+        {
+          table_name: "product_benefits",
+          record_id: benefitId,
+          action: "reconsider",
+          old_values: before
+            ? { status: before.status, rejection_reason: before.rejection_reason }
+            : null,
+          new_values: { status: "pending" },
+          changed_fields: ["status"],
+          reason: reason ?? null,
+          source_page: auditPage,
+        },
+        user
+      );
+
+      return NextResponse.json({ success: true, status: "pending" });
     }
 
     if (action === "edit") {
@@ -153,19 +262,40 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      // Fetch current benefit for corrections
       const { data: current } = await supabase
         .from("product_benefits")
         .select("*")
         .eq("id", benefitId)
         .single();
 
-      // Build update & track corrections
-      const benefitUpdate: Record<string, unknown> = {
-        status: "approved",
-        reviewed_at: reviewedAt,
-      };
+      const benefitUpdate: Record<string, unknown> = {};
+
+      // Approve-on-edit only when explicitly editing a pending benefit (review page).
+      // From database page, we keep the existing status.
+      if (auditPage === "review" && current?.status === "pending") {
+        benefitUpdate.status = "approved";
+        benefitUpdate.reviewed_at = reviewedAt;
+        if (user.id) benefitUpdate.reviewed_by = user.id;
+      }
+      if (user.id) {
+        benefitUpdate.updated_by = user.id;
+        benefitUpdate.updated_at = reviewedAt;
+      }
+
       const corrections: { field_name: string; original_value: string | null; corrected_value: string | null }[] = [];
+      const auditOld: Record<string, unknown> = {};
+      const auditNew: Record<string, unknown> = {};
+      const changedFields: string[] = [];
+
+      function track(field: string, oldVal: unknown, newVal: unknown) {
+        const a = JSON.stringify(oldVal ?? null);
+        const b = JSON.stringify(newVal ?? null);
+        if (a === b) return false;
+        auditOld[field] = oldVal ?? null;
+        auditNew[field] = newVal ?? null;
+        changedFields.push(field);
+        return true;
+      }
 
       if (edits.benefit_name !== undefined) {
         if (current && edits.benefit_name !== current.benefit_name) {
@@ -174,6 +304,7 @@ export async function PATCH(request: NextRequest) {
             original_value: current.benefit_name,
             corrected_value: edits.benefit_name,
           });
+          track("benefit_name", current.benefit_name, edits.benefit_name);
         }
         benefitUpdate.benefit_name = edits.benefit_name;
       }
@@ -184,6 +315,7 @@ export async function PATCH(request: NextRequest) {
             original_value: current.description,
             corrected_value: edits.description,
           });
+          track("description", current.description, edits.description);
         }
         benefitUpdate.description = edits.description;
       }
@@ -191,7 +323,12 @@ export async function PATCH(request: NextRequest) {
         const origStr = JSON.stringify(current?.key_features ?? []);
         const newStr = JSON.stringify(edits.key_features);
         if (origStr !== newStr) {
-          corrections.push({ field_name: "key_features", original_value: origStr, corrected_value: newStr });
+          corrections.push({
+            field_name: "key_features",
+            original_value: origStr,
+            corrected_value: newStr,
+          });
+          track("key_features", current?.key_features ?? [], edits.key_features);
         }
         benefitUpdate.key_features = edits.key_features;
       }
@@ -199,24 +336,31 @@ export async function PATCH(request: NextRequest) {
         const origStr = JSON.stringify(current?.exclusions ?? []);
         const newStr = JSON.stringify(edits.exclusions);
         if (origStr !== newStr) {
-          corrections.push({ field_name: "exclusions", original_value: origStr, corrected_value: newStr });
+          corrections.push({
+            field_name: "exclusions",
+            original_value: origStr,
+            corrected_value: newStr,
+          });
+          track("exclusions", current?.exclusions ?? [], edits.exclusions);
         }
         benefitUpdate.exclusions = edits.exclusions;
       }
       if (edits.reviewer_notes !== undefined) {
+        if (current && edits.reviewer_notes !== current.reviewer_notes) {
+          track("reviewer_notes", current.reviewer_notes, edits.reviewer_notes);
+        }
         benefitUpdate.reviewer_notes = edits.reviewer_notes;
       }
 
-      const { error: benefitError } = await supabase
-        .from("product_benefits")
-        .update(benefitUpdate)
-        .eq("id", benefitId);
+      if (Object.keys(benefitUpdate).length > 0) {
+        const { error: benefitError } = await supabase
+          .from("product_benefits")
+          .update(benefitUpdate)
+          .eq("id", benefitId);
+        if (benefitError) throw benefitError;
+      }
 
-      if (benefitError) throw benefitError;
-
-      // Delete removed attributes
       if (edits.deletedAttributeIds && edits.deletedAttributeIds.length > 0) {
-        // Log deletions
         const { data: deletedAttrs } = await supabase
           .from("benefit_attributes")
           .select("attribute_name, attribute_value")
@@ -229,6 +373,7 @@ export async function PATCH(request: NextRequest) {
               original_value: (da as Record<string, string>).attribute_value,
               corrected_value: null,
             });
+            changedFields.push(`attribute:${(da as Record<string, string>).attribute_name}`);
           }
         }
 
@@ -238,9 +383,7 @@ export async function PATCH(request: NextRequest) {
           .in("id", edits.deletedAttributeIds);
       }
 
-      // Upsert attributes
       if (edits.attributes) {
-        // Fetch originals for correction tracking
         const existingIds = edits.attributes.filter((a) => a.id).map((a) => a.id!);
         const { data: origAttrs } = existingIds.length > 0
           ? await supabase.from("benefit_attributes").select("*").in("id", existingIds)
@@ -258,32 +401,37 @@ export async function PATCH(request: NextRequest) {
                 original_value: orig.attribute_value,
                 corrected_value: attr.attribute_value,
               });
+              changedFields.push(`attribute:${attr.attribute_name}`);
             }
-            await supabase
-              .from("benefit_attributes")
-              .update({
-                attribute_name: attr.attribute_name,
-                attribute_value: attr.attribute_value,
-                attribute_unit: attr.attribute_unit,
-              })
-              .eq("id", attr.id);
+            const attrUpdate: Record<string, unknown> = {
+              attribute_name: attr.attribute_name,
+              attribute_value: attr.attribute_value,
+              attribute_unit: attr.attribute_unit,
+            };
+            if (user.id) {
+              attrUpdate.updated_by = user.id;
+              attrUpdate.updated_at = reviewedAt;
+            }
+            await supabase.from("benefit_attributes").update(attrUpdate).eq("id", attr.id);
           } else {
             corrections.push({
               field_name: `attribute:${attr.attribute_name}`,
               original_value: null,
               corrected_value: attr.attribute_value,
             });
-            await supabase.from("benefit_attributes").insert({
+            changedFields.push(`attribute:${attr.attribute_name}`);
+            const attrInsert: Record<string, unknown> = {
               product_benefit_id: benefitId,
               attribute_name: attr.attribute_name,
               attribute_value: attr.attribute_value,
               attribute_unit: attr.attribute_unit,
-            });
+            };
+            if (user.id) attrInsert.created_by = user.id;
+            await supabase.from("benefit_attributes").insert(attrInsert);
           }
         }
       }
 
-      // Log corrections
       if (corrections.length > 0) {
         await supabase.from("corrections").insert(
           corrections.map((c) => ({
@@ -291,13 +439,29 @@ export async function PATCH(request: NextRequest) {
             field_name: c.field_name,
             original_value: c.original_value,
             corrected_value: c.corrected_value,
+            corrected_by: user.id ?? null,
           }))
         );
       }
 
+      await logAudit(
+        supabase,
+        {
+          table_name: "product_benefits",
+          record_id: benefitId,
+          action: current?.status === "pending" ? "approve" : "update",
+          old_values: Object.keys(auditOld).length > 0 ? auditOld : null,
+          new_values: Object.keys(auditNew).length > 0 ? auditNew : null,
+          changed_fields: changedFields,
+          reason: reason ?? null,
+          source_page: auditPage,
+        },
+        user
+      );
+
       return NextResponse.json({
         success: true,
-        status: "approved",
+        status: benefitUpdate.status ?? current?.status ?? "approved",
         corrections_logged: corrections.length,
       });
     }

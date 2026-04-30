@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Upload, ClipboardCheck, Brain, LogOut } from "lucide-react";
+import {
+  Upload,
+  ClipboardCheck,
+  Brain,
+  LogOut,
+  Database,
+  FileText,
+  Activity,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -12,6 +20,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const navItems = [
   { href: "/upload", label: "Upload", icon: Upload },
   { href: "/review", label: "Review", icon: ClipboardCheck },
+  { href: "/database", label: "Database", icon: Database },
+  { href: "/documents", label: "Documents", icon: FileText },
+  { href: "/activity", label: "Activity", icon: Activity },
   { href: "/train", label: "Train", icon: Brain },
 ];
 
