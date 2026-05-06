@@ -7,9 +7,9 @@
 :root {
   --bg: #ffffff;
   --fg: #1A1A1A;
-  --frankly-green: #00D26A;
-  --frankly-green-hover: #00B85C;
-  --frankly-green-light: #E6FBF0;
+  --frankly-green: #FF7A1A;
+  --frankly-green-hover: #E66200;
+  --frankly-green-light: #FFF1E5;
   --frankly-dark: #1A1A1A;
   --frankly-gray: #4A4A4A;
   --frankly-gray-light: #F5F5F5;
@@ -25,7 +25,7 @@
   color-scheme: dark;
   --bg: #0F1117;
   --fg: #E8EAF0;
-  --frankly-green-light: #0A2E1A;
+  --frankly-green-light: #3A1F0A;
   --frankly-dark: #E8EAF0;
   --frankly-gray: #9BA3B5;
   --frankly-gray-light: #1A1D27;
